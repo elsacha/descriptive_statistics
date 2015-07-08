@@ -1,0 +1,234 @@
+---
+title: Development Priorities in Rwanda compared to Nigeria - World Bank Country Survey 2013
+output:
+  html_document:
+    theme: cerulean
+---
+## Disclaimer
+This study is done as my personal study project. Any possible errors are highly regretted, I am still learning statistics.
+
+## Motivation
+This study aims at comparing opinions on issues citizens are facing in Rwanda and Nigeria - two African countries belonging to two different regions (Great Lakes and West Africa respectively). Both countries are classified as low income countries by the World Bank. In Nigeria, GDP  per capita is 1,091.6 USD, in Rwanda, more than two times less 417.7 USD (Source: [World Bank](http://data.worldbank.org/indicator/NY.GDP.PCAP.KD)).
+It might be interesting to see if opinions of citiezens of these two countries differ. Of course, no causal link with the GDP can be established since this is an observational study. We are not going to establish any form correlation either. This is just a descriptive analysis.
+
+## Research question
+### Compare the opinions of citizen of Rwanda and Nigeria on General Development Priorities (Section A2)
+Respondents could choose up to 3 priorities.
+
+## Source
+[World Bank Country Survey 2013](http://microdata.worldbank.org/index.php/catalog/1923/download/29784)
+[Documentation](http://microdata.worldbank.org/index.php/ddibrowser/1923/export/?format=pdf&generate=yes)
+
+##Load data from the World Bank Country survey 2013
+
+```{r}
+temp <- tempfile()
+download.file("http://microdata.worldbank.org/index.php/catalog/1923/download/29784",temp, mode="wb")
+unzip(temp, "COS FY2013 Annual Review Data.csv")
+raw_world <- read.csv("COS FY2013 Annual Review Data.csv")
+unlink(temp)
+#Kenya code 107
+#South Africa code 110
+rwanda <- subset(raw_world, country==236)
+nigeria <- subset(raw_world, country==230)
+```
+
+
+## Exploratory data analysis
+### Rwanda
+
+Number of participants in the survey:
+```{r}
+gen_rwanda = rwanda[,7:45]
+nrow(gen_rwanda)
+```
+
+Not Available (NA) values (missing values):
+```{r}
+summary(gen_rwanda)
+```
+
+We see that most of the variables (question options) have 4 missing values (NAs). However, eight variables have all 732 values missing. It is possible that the corresponding options were not available in Rwanda. We will drop these columns (a2_27,a2_31,  a2_33 - a2_36, a2_40, please see the documentation for the exact titles). These columns contain no information, so there is no loss of information.
+
+```{r}
+gen_rwanda.sub <- subset(gen_rwanda, select=-c(a2_24, a2_27, a2_31, a2_33, a2_34, a2_35, a2_36, a2_40))
+```
+
+Now let us see if the four NAs in other columns correspond to the same rows, i.e. if there are rows containing only NA values (empty rows).
+
+```{r}
+nrow(gen_rwanda.sub)-nrow(gen_rwanda.sub[complete.cases(gen_rwanda.sub),])
+```
+
+We can see that there are 4 empty rows which we will drop (the loss of data will be about 0.5% only).
+```{r}
+gen_rwanda.sub = gen_rwanda.sub[complete.cases(gen_rwanda.sub),]
+```
+
+### Top 10 answers in Rwanda
+
+```{r}
+gen_rwanda.top10 <- sort(colSums(gen_rwanda.sub), decreasing = T)[1:10]; gen_rwanda.top10
+```
+
+Let us consult the exact option titles from the dictionary
+
+1. a2_16 Health
+
+2. a2_17 Education
+
+3. a2_18 Povery reduction
+
+4. a2_25 Economic growth
+
+5. a2_10 Job creation/employment
+
+6. a2_38 Agriculture and rural development
+
+7. a2_6 Domestic private sector development
+
+8. a2_5 Gender
+
+9. a2_9 Anti-corruption
+
+10. a2_19 Energy
+
+### Percentage of respondents per priority
+```{r}
+rwanda_top10.names <- c("Health", "Education", "Poverty reduction", "Economic growth", 
+                        "Job creation/employment","Agriculture and rural development", 
+                        "Domestic private sector development", "Gender", "Anti-corruption", "Energy")
+names(gen_rwanda.top10) = rwanda_top10.names
+round((gen_rwanda.top10/nrow(gen_rwanda.sub)*100),2)
+```
+*Note: The percentage values do not sum to 100% since the respondents could choose up to 3 priorities*
+
+```{r}
+rwanda.top10.df <- data.frame(prior = rwanda_top10.names, val=gen_rwanda.top10)
+```
+
+## Plot Rwanda's Top 10 Development Priorities
+```{r}
+library(ggplot2)
+# make prior an ordered factor to avoid ggplot ordering alphabetically x-axis labels in barplot
+rwanda.top10.df$prior <- factor(rwanda.top10.df$prior, levels = rwanda.top10.df$prior)
+ggplot(rwanda.top10.df, aes(x=prior, y=val)) +
+geom_bar(stat="identity", colour="black", fill="lightblue") +
+theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+xlab("Priority") +
+ylab("Number of respondents") +
+ggtitle("Rwanda's Top 10 Development Priorities")
+```
+
+
+## Nigeria
+Number of participants in the survey:
+```{r}
+gen_nigeria = nigeria[,7:45]
+nrow(gen_nigeria)
+```
+
+Not Available (NA) values (missing values):
+```{r}
+summary(gen_nigeria)
+```
+
+We see that most of the variables (question options) have 19 missing values (NAs). However, five variables have all 835 values missing. It is possible that the corresponding options were not available in Nigeria. We will drop these columns (a2_33, a2_34, a2_35,a2_36, a2_40, please see the documentation for the exact titles). These columns contain no information, so there is no loss of information.
+
+```{r}
+gen_nigeria.sub <- subset(gen_nigeria, select=-c(a2_33, a2_34, a2_35, a2_36, a2_40))
+```
+
+Now let us see if the 19 NAs in other columns correspond to the same rows, i.e. if there are rows containing only NA values (empty rows).
+
+```{r}
+nrow(gen_nigeria.sub)-nrow(gen_nigeria.sub[complete.cases(gen_nigeria.sub),])
+```
+
+We can see that there are 19 empty rows which we will drop (the loss of data will be slightly more than 2%).
+```{r}
+gen_nigeria.sub = gen_nigeria.sub[complete.cases(gen_nigeria.sub),]
+```
+
+### Top 10 answers in Nigeria
+
+```{r}
+gen_nigeria.top10 <- sort(colSums(gen_nigeria.sub), decreasing = T)[1:10]; gen_nigeria.top10
+```
+
+Let us consult the exact option titles from the dictionary
+
+1. a2_17 Education
+
+2. a2_38 Agriculture and rural development
+
+3. a2_10 Job creation/employment
+
+4. a2_9 Anti-corruption
+
+5. a2_11 Rural development
+
+6. a2_18 Povery reduction
+
+7. a2_29 Basic infrastructure
+
+8. a2_19 Energy
+
+9. a2_3 Public sector governance/reform
+
+10. a2_22 Agricultural development
+
+### Percentage of respondents per priority
+```{r}
+nigeria_top10.names <- c("Education", "Agriculture and rural development", "Job creation/employment", 
+                         "Anti-corruption", "Rural development", "Povery reduction", "Basic infrastructure", 
+                         "Energy", "Public sector governance/reform", "Agricultural development")
+names(gen_nigeria.top10) = nigeria_top10.names
+round((gen_nigeria.top10/nrow(gen_nigeria.sub)*100),2)
+```
+*Note: The percentage values do not sum to 100% since the respondents could choose up to 3 priorities*
+
+```{r}
+nigeria.top10.df <- data.frame(prior = nigeria_top10.names, val=gen_nigeria.top10)
+```
+
+## Plot Nigeria's Top 10 Development Priorities
+```{r}
+#library(ggplot2)
+# make prior an ordered factor to avoid ggplot ordering alphabetically x-axis labels in barplot
+nigeria.top10.df$prior <- factor(nigeria.top10.df$prior, levels = nigeria.top10.df$prior)
+ggplot(nigeria.top10.df, aes(x=prior, y=val)) +
+geom_bar(stat="identity", colour="black", fill="lightblue") +
+theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+xlab("Priority") +
+ylab("Number of respondents") +
+ggtitle("Nigeria's Top 10 Development Priorities")
+```
+
+## Rwanda Top 10 Development Priorities compared to the corresponding priorities in Nigeria (percentage)
+
+```{r}
+comp <- subset(gen_nigeria.sub, select= c(a2_16, a2_17, a2_18, a2_25, a2_10, a2_38, a2_6, a2_5, a2_9, a2_19))
+
+nigeria.comp.rwandatop10 <- sort(colSums(comp), decreasing = T); nigeria.comp.rwandatop10
+nigeria.comp.rwandatop10.df <- data.frame(prior = rwanda_top10.names,
+                         val=round((nigeria.comp.rwandatop10/nrow(comp)*100),2))
+nigeria.comp.rwandatop10.df$country <- rep("Nigeria", 10)
+rwandatop10.comp.df <- rwanda.top10.df
+rwandatop10.comp.df$val <- round(((rwandatop10.comp.df$val/nrow(gen_rwanda.sub))*100),2)
+rwandatop10.comp.df$country <- rep("Rwanda", 10)
+nr <- rbind(nigeria.comp.rwandatop10.df, rwandatop10.comp.df)
+
+# make prior an ordered factor to avoid ggplot ordering alphabetically x-axis labels in barplot
+nr$prior <- factor(nr$prior, levels = nr$prior)
+
+plt <- ggplot(nr, aes(x=prior, y=val, fill=country)) +
+geom_bar(stat="identity", colour="blue", position = "dodge") +
+theme(axis.text.x = element_text(angle = 90, hjust = 1))
+suppressWarnings(print(plt))
+```
+
+From this plot wee see that although in Nigeria "Health" is not the first priority, more than 40% of respondents listed it as a priority. In Rwanda, it is priority number 1 and only 40% chose it. It might be interesting to consider the percentages for each priority in both countries. However, a larger percentage of respondents chose"Domestic private sector development", "Gender", "Anti-corruption" and "Energy" in Rwanda than in Nigeria.
+
+## Conclusions
+This study shows that "Health" is priority number 1 in Rwanda, while Education is the most important priority in Nigeria. "Domestic private sector development", "Anti-corruption", Gender" and "Energy" appear to be more important in Rwanda. "Basic infrastructure" and "Public sector governance/reform"" are higher in the priority list in Nigeria. It must be mentioned, though, that some lower priority issues in Nigeria still have I higher percentage of respondents choosing them than the prercentage of respondents who chose top priorities in Rwanda.

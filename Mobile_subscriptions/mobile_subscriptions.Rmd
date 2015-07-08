@@ -1,0 +1,70 @@
+---
+title: "Mobile subscribers in East Africa"
+output:
+  html_document:
+    theme: cerulean
+---
+## Disclaimer
+This study is done as my personal study project. Any possible errors are highly regretted, I am still learning statistics.
+
+##Source: World Development Indicators - World Bank
+
+The dataset ca be found [here](http://data.un.org/Data.aspx?d=WDI&f=Indicator_Code%3aIT.CEL.SETS.P2)
+
+##Load data and initial processing
+
+```{r}
+raw <- read.csv("mobile.csv", stringsAsFactors = FALSE)
+mobile <- raw
+mobile$Year <- as.numeric(mobile$Year)
+mobile <- subset(mobile, !is.na(mobile$Year))
+#drop Value.Footnotes
+mobile <- mobile[,1:3]
+mobile <- subset(mobile, Year>=2000)
+mobile$Country.or.Area <- as.factor(mobile$Country.or.Area)
+```
+
+##Exploratory data analysis
+
+We will focus on several regions:
+###East Africa
+
+```{r}
+eAfrcountries <- c("Burundi", "Djibouti", "Eritrea", "Ethiopia", "Kenya", "Tanzania", "Uganda", "Rwanda")
+eAfr <- subset(mobile, Country.or.Area %in% as.factor(eAfrcountries))
+
+#drop unused country factor levels from other regions
+eAfr$Country.or.Area = factor(eAfr$Country.or.Area)
+```
+
+##Average mobile subscriptions per country since 2000
+```{r}
+av_subscr <- tapply(eAfr$Value, eAfr$Country.or.Area, mean); av_subscr
+```
+
+##Kenya (per 100 people)
+```{r, echo=FALSE}
+Kenya <- subset(eAfr, Country.or.Area=="Kenya")
+library(ggplot2)
+ggplot(Kenya, aes(x=Year, y=Value)) + geom_bar(stat="identity", fill="lightblue", colour="black")
+```
+
+##Kenya compared to Tanzania (per 100 people)
+```{r}
+KenTan <- subset(eAfr, Country.or.Area %in% c("Kenya", "Tanzania"))
+ggplot(KenTan, aes(x=Year, y=Value)) +
+geom_bar(stat="identity", colour="black", fill="lightblue", position = "dodge") +
+facet_grid(~ Country.or.Area)
+  
+KenTan <- subset(eAfr, Country.or.Area %in% c("Kenya", "Tanzania"))
+ggplot(KenTan, aes(x=Year, y=Value, fill=Country.or.Area)) +
+geom_bar(stat="identity", colour="blue", position = "dodge")
+```
+
+## East African countries (per 100 people)
+```{r}
+ggplot(eAfr, aes(x=Year, y=Value)) + geom_bar(stat="identity", fill="lightblue", colour="black") +
+facet_wrap(~ Country.or.Area, ncol=2)
+```
+
+
